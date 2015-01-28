@@ -1,0 +1,94 @@
+---
+
+- hosts: localhost
+
+  vars:
+  - source_dir: /soft/source
+  - soft_dir: /soft/apps
+  - modules_dir: /soft/modules
+  - lmod_version: 5.8.5
+  - lua_version: 5.1.4.8
+  - easybuild_version: 1.16.1
+
+  tasks:
+  - name: install some dependencies | Debian
+    apt: pkg={{ item }} state=present
+    when: ansible_os_family == "Debian"
+    with_items:
+      - build-essential
+      - python-pip
+      - tcl
+  
+  - name: install some dependencies | RedHat
+    yum: name={{ item }} state=present
+    when: ansible_os_family == "RedHat"
+    with_items:
+      - "@Development tools"
+      - python-pip
+      - tcl
+  
+  - name: install python pip | RedHat
+    yum: name=python-pip state=present
+    when: ansible_os_family == "RedHat"
+  
+  - name: Create required directories
+    file: dest={{item}} state=directory mode=0755
+    with_items:
+    - "{{ source_dir }}/l/Lmod"
+    - "{{ source_dir }}/l/Lua"
+    - "{{ soft_dir }}/Lua/{{ lua_version }}"
+    - "{{ soft_dir }}/EasyBuild/{{ easybuild_version }}"
+    - "{{ modules_dir }}/all/EasyBuild"
+    - "{{ modules_dir }}/tools/EasyBuild"
+    - /tmp/easybuild_source/framework
+    - /tmp/easybuild_source/easyblocks
+    - /tmp/easybuild_source/easyconfigs
+
+  - name: Download LMOD
+    get_url: 
+      url=http://downloads.sourceforge.net/project/lmod/Lmod-{{ lmod_version }}.tar.bz2  
+      dest={{source_dir}}/l/Lmod 
+      mode=0444
+  
+  - name: Download LUA
+    get_url: 
+      url=http://sourceforge.net/projects/lmod/files/lua-{{ lua_version }}.tar.gz/download  
+      dest={{source_dir}}/l/Lua 
+      mode=0444
+
+  - name: Uncompress LMOD
+    unarchive: src={{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}.tar.bz2 dest={{ source_dir }}/l/Lmod copy=no
+  
+  - name: Uncompress LUA
+    unarchive: src={{ source_dir }}/l/Lua/lua-{{ lua_version }}.tar.gz dest={{ source_dir }}/l/Lua copy=no
+
+  - name: Compile and install Lua
+    shell: cd {{ source_dir }}/l/Lua/lua-{{ lua_version }}; ./configure --with-static=yes --prefix={{ soft_dir }}/Lua/{{ lua_version }} && make && make install 
+
+  - name: Compile and install Lmod
+    shell: export PATH={{ soft_dir }}/Lua/{{ lua_version }}/bin:$PATH; cd {{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}; ./configure --prefix={{ soft_dir }} --with-lua-include={{ soft_dir }}/Lua/{{ lua_version }}/include --with-mpathSearch=YES --with-caseIndependentSorting=YES && make install 
+
+  - name: Install EasyBuild using python-pip
+    shell: pip install --install-option=--prefix={{ soft_dir }}/EasyBuild/{{ easybuild_version }} easybuild
+
+  - name: Fetch python version (to be used in the EasyBuild modulefile template)
+    shell: find {{ soft_dir }}/EasyBuild/{{ easybuild_version }}/ -name site-packages -exec echo {} \;|awk -F / {'print $(NF-1)'} 
+    register: python_version
+
+  - name: copy EasyBuild modulefile
+    template: 
+      src=templates/easybuild-modulefile.j2 
+      dest={{ modules_dir }}/all/EasyBuild/{{ easybuild_version }}
+
+  - name: Create symlink for EasyBuild modulefile in Tools folder (EasyBuild moduleclass)
+    file: 
+      src={{ modules_dir }}/all/EasyBuild/{{ easybuild_version }} 
+      dest={{ modules_dir }}/tools/EasyBuild/{{ easybuild_version }}
+      state=link
+
+  - name: Copy lmod init file to /etc/profile.d/lmod.sh
+    template: 
+      src=templates/lmod.profile.sh.j2
+      dest=/etc/profile.d/lmod.sh
+      owner=root
+      mode=644
