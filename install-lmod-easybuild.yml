@@ -14,7 +14,6 @@
   - modules_dir: /soft/modules
   - lmod_version: 5.8.5
   - lua_version: 5.1.4.8
-  - easybuild_version: 1.16.1
 
   tasks:
   - name: install some dependencies | Debian
@@ -24,21 +23,28 @@
       - build-essential
       - python-pip
       - tcl
+      - wget
   
+  - name: Install EPEL repo (needed to install python-pip)
+    yum: name=epel-release state=present
+    when: ansible_os_family == "RedHat"
+
   - name: install some dependencies | RedHat
-    yum: name={{ item }} state=present
+    yum: name={{ item }} enablerepo=epel state=present
     when: ansible_os_family == "RedHat"
     with_items:
       - python-pip
       - tcl
+      - wget
   
   - name: install devel tools | RedHat
     yum: name="@Development tools" state=present
     when: ansible_os_family == "RedHat"
-  
-  - name: install python pip | RedHat
-    yum: name=python-pip state=present
-    when: ansible_os_family == "RedHat"
+
+  - name: Fetch which is the latest release of easybuild
+    shell: wget https://pypi.python.org/pypi/easybuild -O - |grep title|head -1|awk {'print $2'}
+    register: easybuild_version
+    changed_when: no
   
   - name: Create required directories
     file: dest={{item}} state=directory mode=0755
@@ -46,7 +52,7 @@
     - "{{ source_dir }}/l/Lmod"
     - "{{ source_dir }}/l/Lua"
     - "{{ soft_dir }}/Lua/{{ lua_version }}"
-    - "{{ soft_dir }}/EasyBuild/{{ easybuild_version }}"
+    - "{{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }}"
     - "{{ modules_dir }}/all/EasyBuild"
     - "{{ modules_dir }}/tools/EasyBuild"
 
@@ -75,21 +81,21 @@
     shell: export PATH={{ soft_dir }}/Lua/{{ lua_version }}/bin:$PATH; cd {{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}; ./configure --prefix={{ soft_dir }} --with-lua-include={{ soft_dir }}/Lua/{{ lua_version }}/include --with-mpathSearch=YES --with-caseIndependentSorting=YES && make install 
 
   - name: Install EasyBuild using python-pip
-    shell: pip install --install-option=--prefix={{ soft_dir }}/EasyBuild/{{ easybuild_version }} easybuild
+    shell: pip install --install-option=--prefix={{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }} easybuild
 
   - name: Fetch python version (to be used in the EasyBuild modulefile template)
-    shell: find {{ soft_dir }}/EasyBuild/{{ easybuild_version }}/ -name site-packages -exec echo {} \;|awk -F / {'print $(NF-1)'} 
+    shell: find {{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }}/ -name site-packages -exec echo {} \;|awk -F / {'print $(NF-1)'} 
     register: python_version
 
   - name: copy EasyBuild modulefile
     template: 
       src=templates/easybuild-modulefile.j2 
-      dest={{ modules_dir }}/all/EasyBuild/{{ easybuild_version }}
+      dest={{ modules_dir }}/all/EasyBuild/{{ easybuild_version.stdout }}
 
   - name: Create symlink for EasyBuild modulefile in Tools folder (EasyBuild moduleclass)
     file: 
-      src={{ modules_dir }}/all/EasyBuild/{{ easybuild_version }} 
-      dest={{ modules_dir }}/tools/EasyBuild/{{ easybuild_version }}
+      src={{ modules_dir }}/all/EasyBuild/{{ easybuild_version.stdout }} 
+      dest={{ modules_dir }}/tools/EasyBuild/{{ easybuild_version.stdout }}
       state=link
 
   - name: Copy lmod bash init file to /etc/profile.d/lmod.sh

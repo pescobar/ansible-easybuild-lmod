@@ -11,7 +11,7 @@ module-whatis {Description: EasyBuild is a software build and installation frame
  written in Python that allows you to install software in a structured,
  repeatable and robust way. - Homepage: http://hpcugent.github.com/easybuild/}
 
-set root    {{ soft_dir }}/EasyBuild/{{ easybuild_version }}
+set root    {{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }}
 
 conflict EasyBuild
 
@@ -20,8 +20,8 @@ prepend-path	LIBRARY_PATH		$root/lib
 prepend-path	PATH		$root/bin
 
 setenv	EBROOTEASYBUILD		"$root"
-setenv	EBVERSIONEASYBUILD		"{{ easybuild_version }}"
-setenv	EBDEVELEASYBUILD		"$root/easybuild/EasyBuild-{{ easybuild_version }}-easybuild-devel"
+setenv	EBVERSIONEASYBUILD		"{{ easybuild_version.stdout }}"
+setenv	EBDEVELEASYBUILD		"$root/easybuild/EasyBuild-{{ easybuild_version.stdout }}-easybuild-devel"
 
 prepend-path	PYTHONPATH		$root/lib/{{ python_version.stdout }}/site-packages
 
