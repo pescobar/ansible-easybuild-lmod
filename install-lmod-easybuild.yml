@@ -43,9 +43,6 @@
     - "{{ soft_dir }}/EasyBuild/{{ easybuild_version }}"
     - "{{ modules_dir }}/all/EasyBuild"
     - "{{ modules_dir }}/tools/EasyBuild"
-    - /tmp/easybuild_source/framework
-    - /tmp/easybuild_source/easyblocks
-    - /tmp/easybuild_source/easyconfigs
 
   - name: Download LMOD
     get_url: 
