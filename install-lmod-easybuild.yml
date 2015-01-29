@@ -1,6 +1,6 @@
 ---
 
-- hosts: localhost
+- hosts: bc2-virtual-template01.bc2.unibas.ch
 
   vars:
   - source_dir: /soft/source
@@ -23,9 +23,12 @@
     yum: name={{ item }} state=present
     when: ansible_os_family == "RedHat"
     with_items:
-      - "@Development tools"
       - python-pip
       - tcl
+  
+  - name: install devel tools | RedHat
+    yum: name="@Development tools" state=present
+    when: ansible_os_family == "RedHat"
   
   - name: install python pip | RedHat
     yum: name=python-pip state=present
