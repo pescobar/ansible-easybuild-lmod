@@ -1,6 +1,12 @@
 ---
-
-- hosts: bc2-virtual-template01.bc2.unibas.ch
+#
+# This playbook deploys Lmod + Easybuild
+#
+# To use this playbook add the machine to your ansible inventory and execute like this:
+# $> ansible-playbook -i /path/to/inventory -e hostsvar=machine-to-deploy install-lmod-easybuild.yml
+#
+#
+- hosts: "{{ hostsvar }}"
 
   vars:
   - source_dir: /soft/source
