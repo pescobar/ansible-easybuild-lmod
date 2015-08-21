@@ -1,0 +1,39 @@
+[basic]
+robot={{ easybuild_robot }}
+ 
+[config] 
+# use Lmod as modules tool 
+modules-tool: Lmod 
+module-syntax: {{ modules_syntax }}
+ 
+# default install path 
+installpath={{ easybuild_prefix }}
+ 
+# path to store compiled apps 
+# full­path is $installpath/$subdir­software 
+subdir-software={{ easybuild_subdir_software }}
+ 
+# path to store modulefiles 
+# full path is $installpath/$subdir­modules 
+subdir-modules={{ easybuild_subdir_modules }}
+ 
+# folder to store all the source files 
+sourcepath={{ source_dir }}
+ 
+# compile the software here 
+#buildpath=/tmp/easybuild 
+ 
+# Repository type
+repository=FileRepository 
+# folder to store installed easyconfigs 
+repositorypath={{ easybuild_robot }}
+ 
+[override] 
+# define cpu optimization
+# with march=core2 optimization the applications will run in any cpu type
+#optarch=march=core2
+
+# all these modules will be hidden by default
+filter-deps=bzip2,gzip,libreadline,M4,ncurses,zlib
+#hide-deps=libjpeg-turbo,libpng,SQLite
+

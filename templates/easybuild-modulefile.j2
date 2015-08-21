@@ -11,7 +11,7 @@ module-whatis {Description: EasyBuild is a software build and installation frame
  written in Python that allows you to install software in a structured,
  repeatable and robust way. - Homepage: http://hpcugent.github.com/easybuild/}
 
-set root    {{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }}
+set root    {{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/{{ easybuild_version.stdout }}
 
 conflict EasyBuild
 

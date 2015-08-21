@@ -7,23 +7,37 @@
 #
 #
 - hosts: "{{ hostsvar }}"
+  user: gc3-user
+  sudo: True
 
   vars:
-  - source_dir: /soft/source
-  - soft_dir: /soft/apps
-  - modules_dir: /soft/modules
-  - lmod_version: 5.8.5
+  - easybuild_prefix: /opt/soft
+  - easybuild_subdir_software: apps
+  - easybuild_subdir_modules: modules
+  - source_dir: /opt/soft/source
+  - modules_syntax: Lua
+  - easybuild_robot: /opt/soft/ebfiles
+  - lmod_version: 6.0.9
   - lua_version: 5.1.4.8
 
   tasks:
+
+  # in this task I install the easybuild deps and also those packages which won't be installed 
+  # by easybuild because of --filter-deps option in easybuild
   - name: install some dependencies | Debian
-    apt: pkg={{ item }} state=present
+    apt: pkg={{ item }} state=present update_cache=yes
     when: ansible_os_family == "Debian"
     with_items:
       - build-essential
       - python-pip
       - tcl
       - wget
+      - libc6-dev-i386
+      - libbz2-dev
+      - zlib1g-dev
+      - libreadline-dev
+      - m4
+      - libncurses-dev
   
   - name: Install EPEL repo (needed to install python-pip)
     yum: name=epel-release state=present
@@ -36,6 +50,14 @@
       - python-pip
       - tcl
       - wget
+      - bzip2-devel
+      - gzip
+      - zlib-devel
+      - readline-devel
+      - readline-static
+      - ncurses-devel
+      - ncurses-static
+      - m4
   
   - name: install devel tools | RedHat
     yum: name="@Development tools" state=present
@@ -51,14 +73,14 @@
     with_items:
     - "{{ source_dir }}/l/Lmod"
     - "{{ source_dir }}/l/Lua"
-    - "{{ soft_dir }}/Lua/{{ lua_version }}"
-    - "{{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }}"
-    - "{{ modules_dir }}/all/EasyBuild"
-    - "{{ modules_dir }}/tools/EasyBuild"
+    - "{{ easybuild_prefix }}/{{ easybuild_subdir_software }}/Lua/{{ lua_version }}"
+    - "{{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/{{ easybuild_version.stdout }}"
+    - "{{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/all/EasyBuild"
+    - "{{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/tools/EasyBuild"
 
   - name: Download LMOD
     get_url: 
-      url=http://downloads.sourceforge.net/project/lmod/Lmod-{{ lmod_version }}.tar.bz2  
+      url=https://github.com/TACC/Lmod/archive/{{ lmod_version }}.tar.gz
       dest={{source_dir}}/l/Lmod 
       mode=0444
   
@@ -68,34 +90,38 @@
       dest={{source_dir}}/l/Lua 
       mode=0444
 
+  #- name: Uncompress LMOD
+    #unarchive: src={{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}.tar.gz dest={{ source_dir }}/l/Lmod copy=no
+    # We use shell module to uncompress. Check this bug report: https://github.com/ansible/ansible/issues/11348#issuecomment-123133302
+  
   - name: Uncompress LMOD
-    unarchive: src={{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}.tar.bz2 dest={{ source_dir }}/l/Lmod copy=no
+    shell: tar -xf {{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}.tar.gz -C {{ source_dir }}/l/Lmod
   
   - name: Uncompress LUA
     unarchive: src={{ source_dir }}/l/Lua/lua-{{ lua_version }}.tar.gz dest={{ source_dir }}/l/Lua copy=no
 
   - name: Compile and install Lua
-    shell: cd {{ source_dir }}/l/Lua/lua-{{ lua_version }}; ./configure --with-static=yes --prefix={{ soft_dir }}/Lua/{{ lua_version }} && make && make install 
+    shell: cd {{ source_dir }}/l/Lua/lua-{{ lua_version }}; ./configure --with-static=yes --prefix={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/Lua/{{ lua_version }} && make && make install 
 
   - name: Compile and install Lmod
-    shell: export PATH={{ soft_dir }}/Lua/{{ lua_version }}/bin:$PATH; cd {{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}; ./configure --prefix={{ soft_dir }} --with-lua-include={{ soft_dir }}/Lua/{{ lua_version }}/include --with-mpathSearch=YES --with-caseIndependentSorting=YES && make install 
+    shell: export PATH={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/Lua/{{ lua_version }}/bin:$PATH; cd {{ source_dir }}/l/Lmod/Lmod-{{ lmod_version }}; ./configure --prefix={{ easybuild_prefix }}/{{ easybuild_subdir_software }} --with-lua-include={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/Lua/{{ lua_version }}/include --with-mpathSearch=YES --with-caseIndependentSorting=YES && make install 
 
   - name: Install EasyBuild using python-pip
-    shell: pip install --install-option=--prefix={{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }} easybuild
+    shell: pip install --install-option=--prefix={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/{{ easybuild_version.stdout }} easybuild
 
   - name: Fetch python version (to be used in the EasyBuild modulefile template)
-    shell: find {{ soft_dir }}/EasyBuild/{{ easybuild_version.stdout }}/ -name site-packages -exec echo {} \;|awk -F / {'print $(NF-1)'} 
+    shell: find {{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/{{ easybuild_version.stdout }}/ -name site-packages -exec echo {} \;|awk -F / {'print $(NF-1)'} 
     register: python_version
 
   - name: copy EasyBuild modulefile
     template: 
       src=templates/easybuild-modulefile.j2 
-      dest={{ modules_dir }}/all/EasyBuild/{{ easybuild_version.stdout }}
+      dest={{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/all/EasyBuild/{{ easybuild_version.stdout }}
 
   - name: Create symlink for EasyBuild modulefile in Tools folder (EasyBuild moduleclass)
     file: 
-      src={{ modules_dir }}/all/EasyBuild/{{ easybuild_version.stdout }} 
-      dest={{ modules_dir }}/tools/EasyBuild/{{ easybuild_version.stdout }}
+      src={{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/all/EasyBuild/{{ easybuild_version.stdout }} 
+      dest={{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/tools/EasyBuild/{{ easybuild_version.stdout }}
       state=link
 
   - name: Copy lmod bash init file to /etc/profile.d/lmod.sh
@@ -111,3 +137,31 @@
       dest=/etc/profile.d/lmod.csh
       owner=root
       mode=644
+  
+  - name: Copy OpenMPI easyconfigs with infiniband support disabled and slurm support enabled
+    template: 
+      src=templates/{{ item }}
+      dest={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/{{ easybuild_version.stdout }}/easybuild/easyconfigs/o/OpenMPI/
+      owner=root
+      mode=644
+      backup=yes
+    with_items:
+      - OpenMPI-1.6.4-GCC-4.7.2.eb
+      - OpenMPI-1.8.4-GCC-4.8.4.eb
+      - OpenMPI-1.8.4-GCC-4.9.2.eb
+  
+  - name: Copy easybuild config file
+    template: 
+      src=templates/easybuild.cfg.j2
+      dest={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/easybuild.cfg
+      backup=yes
+  
+  - name: Copy easybuild profile file
+    template: 
+      src=templates/easybuild-config-profile.sh.j2
+      dest=/etc/profile.d/easybuild.sh
+      backup=yes
+
+  - name: Fix permissions 
+    file: path={{ easybuild_prefix }} owner=gc3-user mode=755 recurse=yes
+

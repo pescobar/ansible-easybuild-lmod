@@ -1,0 +1,7 @@
+export EASYBUILD_CONFIGFILES={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/EasyBuild/easybuild.cfg
+export EASYBUILD_TMPDIR=/tmp/${USER}
+export EASYBUILD_TMP_LOGDIR=/tmp/${USER}
+export EASYBUILD_BUILDPATH=/tmp/${USER}
+{% if ansible_os_family == "Debian" %}
+export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+{% endif %}
