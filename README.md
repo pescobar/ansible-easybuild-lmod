@@ -1,7 +1,7 @@
 # ansible-easybuild-lmod
 ansible playbook to deploy EasyBuild and Lmod
 
-To use this playbook add the machine to your ansible inventory and execute like this:
+Example run:
 
-$> ansible-playbook -i /path/to/inventory -e hostsvar=machine-to-deploy install-lmod-easybuild.yml
+$> ansible-playbook -i /path/to/inventory install-lmod-easybuild.yml -e hostsvar=192.168.1.33 -e uservar=gc3-user -e prefixvar=/opt/soft
 
