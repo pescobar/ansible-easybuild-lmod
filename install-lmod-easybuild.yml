@@ -7,16 +7,16 @@
 #
 #
 - hosts: "{{ hostsvar }}"
-  user: gc3-user
+  user: "{{ uservar }}"
   sudo: True
 
   vars:
-  - easybuild_prefix: /opt/soft
+  - easybuild_prefix: "{{ prefixvar }}"
   - easybuild_subdir_software: apps
   - easybuild_subdir_modules: modules
-  - source_dir: /opt/soft/source
+  - source_dir: "{{ prefixvar }}"/source
   - modules_syntax: Lua
-  - easybuild_robot: /opt/soft/ebfiles
+  - easybuild_robot: "{{ prefixvar }}"/ebfiles
   - lmod_version: 6.0.9
   - lua_version: 5.1.4.8
 
@@ -163,5 +163,5 @@
       backup=yes
 
   - name: Fix permissions 
-    file: path={{ easybuild_prefix }} owner=gc3-user mode=755 recurse=yes
+    file: path={{ easybuild_prefix }} owner={{ uservar }} mode=755 recurse=yes
 
