@@ -1,4 +1,12 @@
-if ( -f  {{ easybuild_prefix }}/{{ easybuild_subdir_software }}/lmod/lmod/init/csh  ) then
+set shell = `basename $SHELL`
+setenv TARG_TITLE_BAR_PAREN " "
+setenv LMOD_FULL_SETTARG_SUPPORT no
+setenv LMOD_SETTARG_CMD     :
+setenv LMOD_COLORIZE        yes
+setenv LMOD_PREPEND_BLOCK   normal
+setenv BASH_ENV             "{{ easybuild_prefix }}/{{ easybuild_subdir_software }}/lmod/lmod/init/bash"
+
+if ( -f  {{ easybuild_prefix }}/{{ easybuild_subdir_software }}/lmod/lmod/init/$shell  ) then
   source {{ easybuild_prefix }}/{{ easybuild_subdir_software }}/lmod/lmod/init/$shell
 endif
 
