@@ -6,9 +6,7 @@ then
     export PATH={{ easybuild_prefix }}/{{ easybuild_subdir_software }}/lmod/lmod/libexec:$PATH
     . {{ easybuild_prefix }}/{{ easybuild_subdir_software }}/lmod/lmod/init/$shell
 
-    for dir in `ls -1 {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}| egrep -v '^all$' `
-    do
-	export MODULEPATH="$MODULEPATH:{{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/$dir"
-    done
+    module use {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/vis {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/tools {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/toolchain {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/system {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/phys {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/perf {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/numlib {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/mpi {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/math {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/lib {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/lang {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/ide {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/geo {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/devel {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/debugger {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/data {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/compiler {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/chem {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/cae {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/bio {{ easybuild_prefix }}/{{ easybuild_subdir_modules }}/base
+
 
 fi
