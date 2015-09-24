@@ -38,6 +38,7 @@
       - libreadline-dev
       - m4
       - libncurses-dev
+      - libselinux-python
   
   - name: Install EPEL repo (needed to install python-pip)
     yum: name=epel-release state=present
