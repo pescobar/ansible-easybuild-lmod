@@ -165,5 +165,5 @@
       backup=yes
 
   - name: Fix permissions 
-    file: path={{ easybuild_prefix }} owner={{ ebuser }} mode=755 recurse=yes
+    file: path={{ easybuild_prefix }} owner={{ easybuild_user }} mode=755 recurse=yes
 
