@@ -7,13 +7,14 @@
 #
 #
 - hosts: "{{ hostsvar }}"
-  user: "{{ uservar }}"
+  user: "{{ sshuser }}"
   sudo: True
 
   vars:
   - easybuild_prefix: "{{ prefixvar }}"
   - easybuild_subdir_software: apps
   - easybuild_subdir_modules: modules
+  - easybuild_user: "{{ ebuser }}"
   - source_dir: "{{ prefixvar }}/source"
   - modules_syntax: Lua
   - easybuild_robot: "{{ prefixvar }}/ebfiles"
@@ -164,5 +165,5 @@
       backup=yes
 
   - name: Fix permissions 
-    file: path={{ easybuild_prefix }} owner={{ uservar }} mode=755 recurse=yes
+    file: path={{ easybuild_prefix }} owner={{ ebuser }} mode=755 recurse=yes
 
